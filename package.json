@@ -1,0 +1,50 @@
+{
+  "name": "typespec-x-ogen",
+  "version": "0.1.0",
+  "description": "TypeSpec decorators for ogen (https://ogen.dev) OpenAPI vendor extensions (x-ogen-*).",
+  "keywords": [
+    "typespec",
+    "openapi",
+    "ogen",
+    "extensions",
+    "decorators"
+  ],
+  "license": "MIT",
+  "author": "Yoshito Ohata",
+  "type": "module",
+  "main": "dist/src/index.js",
+  "tspMain": "lib/main.tsp",
+  "exports": {
+    ".": {
+      "typespec": "./lib/main.tsp",
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
+    }
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "lib/**/*.tsp",
+    "dist/**/*.js",
+    "dist/**/*.d.ts",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p .",
+    "watch": "tsc -p . --watch",
+    "clean": "rm -rf dist tsp-output"
+  },
+  "peerDependencies": {
+    "@typespec/compiler": ">=1.12.0 <2.0.0",
+    "@typespec/openapi": ">=1.12.0 <2.0.0"
+  },
+  "devDependencies": {
+    "@typespec/compiler": "^1.12.0",
+    "@typespec/http": "^1.12.0",
+    "@typespec/openapi": "^1.12.0",
+    "@typespec/openapi3": "^1.12.0",
+    "typescript": "^5.7.0"
+  }
+}
