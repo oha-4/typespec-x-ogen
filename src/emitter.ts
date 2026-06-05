@@ -51,7 +51,10 @@ type AnyObject = Record<string, any>;
 export async function $onEmit(context: EmitContext<XOgenEmitterOptions>): Promise<void> {
   const { program } = context;
   const options = context.options;
-  const fileType = options["file-type"] ?? "yaml";
+  // file-type is optional: use it when set, otherwise infer from the
+  // output-file extension, and finally fall back to yaml.
+  const fileType =
+    options["file-type"] ?? fileTypeFromFilename(options["output-file"]) ?? "yaml";
 
   // Fold deferred @ogenName-on-property into each parent's x-ogen-properties
   // before generating the document, so the openapi3 emitter picks it up.
@@ -234,6 +237,19 @@ function resolveFilename(
     parts.push(version);
   }
   return `${parts.join(".")}.${fileType}`;
+}
+
+function fileTypeFromFilename(filename: string | undefined): "yaml" | "json" | undefined {
+  if (filename === undefined) {
+    return undefined;
+  }
+  if (filename.endsWith(".json")) {
+    return "json";
+  }
+  if (filename.endsWith(".yaml") || filename.endsWith(".yml")) {
+    return "yaml";
+  }
+  return undefined;
 }
 
 function serialize(document: AnyObject, fileType: "yaml" | "json"): string {

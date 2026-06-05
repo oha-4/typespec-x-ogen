@@ -29,16 +29,18 @@ Use `typespec-x-ogen` as your emitter (it wraps `@typespec/openapi3`, so you do
 # tspconfig.yaml
 emit:
   - typespec-x-ogen
-options:
-  typespec-x-ogen:
-    file-type: yaml # or "json"
 ```
+
+All options are optional:
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `file-type` | `"yaml" \| "json"` | `"yaml"` | Output format. |
+| `file-type` | `"yaml" \| "json"` | inferred from `output-file`, else `"yaml"` | Output format. |
 | `output-file` | `string` | `openapi.{service-name}.{version}.{file-type}` | Output file name. Supports `{service-name}`, `{version}`, `{file-type}`. |
 | `openapi-versions` | `string[]` | `["3.0.0"]` | OpenAPI versions to emit (forwarded to `@typespec/openapi3`). |
+
+`file-type` does not need to be set — it is inferred from the `output-file`
+extension (`.json` / `.yaml` / `.yml`) and defaults to `yaml`.
 
 ## Decorators
 
