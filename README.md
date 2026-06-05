@@ -4,9 +4,14 @@ TypeSpec decorators for [ogen](https://ogen.dev) OpenAPI vendor extensions.
 
 This library lets you author every [ogen extension](https://ogen.dev/docs/spec/extensions/)
 (the `x-ogen-*` / `x-oapi-codegen-*` vendor extensions) directly in TypeSpec,
-instead of hand-editing the generated OpenAPI document. It ships a thin emitter
-that wraps [`@typespec/openapi3`](https://typespec.io/docs/emitters/openapi3/)
-and injects the extensions into the produced document.
+instead of hand-editing the generated OpenAPI document.
+
+It does **not** replace [`@typespec/openapi3`](https://typespec.io/docs/emitters/openapi3/):
+`@typespec/openapi3` stays your emitter. Four of the six extensions are applied
+during its normal run, with no extra emitter. The remaining two
+(`x-ogen-server-name`, `x-ogen-json-streaming`) target OpenAPI objects that
+openapi3 does not let libraries extend, so they are applied by an optional
+post-processing emitter you add **after** openapi3.
 
 ## Install
 
@@ -22,25 +27,39 @@ Peer dependencies (installed automatically in most setups):
 
 ## Setup
 
-Use `typespec-x-ogen` as your emitter (it wraps `@typespec/openapi3`, so you do
-**not** also list `@typespec/openapi3`):
+Import the library (this is enough for four of the six extensions) and keep
+`@typespec/openapi3` as your emitter:
 
 ```yaml
 # tspconfig.yaml
 emit:
+  - "@typespec/openapi3"
+```
+
+Works with `emit: ["@typespec/openapi3"]` alone:
+
+- `@ogenName`
+- `@ogenExtraTags`
+- `@ogenOperationGroup` (operation, interface and namespace)
+
+To also get `@ogenServerName` and `@ogenJsonStreaming`, add `typespec-x-ogen`
+**after** `@typespec/openapi3` — it patches openapi3's output in place:
+
+```yaml
+# tspconfig.yaml
+emit:
+  - "@typespec/openapi3"
   - typespec-x-ogen
 ```
 
-All options are optional:
+Using `@ogenServerName` / `@ogenJsonStreaming` without the post-processing
+emitter produces a warning telling you to add it.
+
+### Post-processor options
 
 | Option | Type | Default | Description |
 | --- | --- | --- | --- |
-| `file-type` | `"yaml" \| "json"` | inferred from `output-file`, else `"yaml"` | Output format. |
-| `output-file` | `string` | `openapi.{service-name}.{version}.{file-type}` | Output file name. Supports `{service-name}`, `{version}`, `{file-type}`. |
-| `openapi-versions` | `string[]` | `["3.0.0"]` | OpenAPI versions to emit (forwarded to `@typespec/openapi3`). |
-
-`file-type` does not need to be set — it is inferred from the `output-file`
-extension (`.json` / `.yaml` / `.yml`) and defaults to `yaml`.
+| `openapi3-output-dir` | `string` | sibling `@typespec/openapi3` dir | Directory of the openapi3 output to patch. Override if you customized openapi3's output location. |
 
 ## Decorators
 
@@ -120,11 +139,17 @@ bodies. Pass `"request"` or `"response"` to narrow; omit for both.
 ## How it works
 
 Most extensions are applied with `@typespec/openapi`'s `setExtension`, which the
-openapi3 emitter writes onto the matching schema / operation / property. Server
-objects and media-type objects are not visited by that mechanism, so
-`x-ogen-server-name` and `x-ogen-json-streaming` (and interface/namespace-level
-operation-group cascading) are patched into the document by this library's
-emitter after calling `getOpenAPI3`.
+openapi3 emitter writes onto the matching schema / operation / property. This
+happens in the library's `$onValidate` (so the parent of an `@ogenName`-on-
+property and the operation-group cascade can be resolved once checking is
+complete) and is picked up by a plain `@typespec/openapi3` run — no extra
+emitter required.
+
+Server objects and media-type objects are not visited by that mechanism, so
+`x-ogen-server-name` and `x-ogen-json-streaming` cannot be set that way. The
+optional `typespec-x-ogen` emitter handles them by reading the OpenAPI document
+`@typespec/openapi3` already wrote and patching those two keys in place. It does
+not regenerate or wrap the document.
 
 A complete example lives in [`samples/`](./samples).
 

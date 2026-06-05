@@ -7,6 +7,7 @@ import {
 } from "./decorators.js";
 
 export { $lib } from "./lib.js";
+export { $onValidate } from "./validate.js";
 export { $onEmit, type XOgenEmitterOptions } from "./emitter.js";
 
 /**

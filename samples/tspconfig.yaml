@@ -1,2 +1,6 @@
+# The four schema/operation extensions work with @typespec/openapi3 alone.
+# Add typespec-x-ogen (after openapi3) to also get x-ogen-server-name and
+# x-ogen-json-streaming patched into the output.
 emit:
+  - "@typespec/openapi3"
   - typespec-x-ogen

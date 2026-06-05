@@ -1,36 +1,28 @@
 import {
-  emitFile,
+  NoTarget,
   resolvePath,
   type EmitContext,
   type Namespace,
   type Operation,
   type Program,
 } from "@typespec/compiler";
-import { getExtensions, resolveOperationId, setExtension } from "@typespec/openapi";
-import { getOpenAPI3 } from "@typespec/openapi3";
-import { stringify as yamlStringify } from "yaml";
+import { resolveOperationId } from "@typespec/openapi";
+import { parse as yamlParse, stringify as yamlStringify } from "yaml";
+import { reportDiagnostic } from "./lib.js";
 import {
   JsonStreamingKey,
-  OperationGroupKey,
-  PropertyNameKey,
   ServerNameKey,
   type JsonStreamingLocation,
-  type OperationGroupContainer,
   type ServerNameEntry,
 } from "./state.js";
-import type { ModelProperty } from "@typespec/compiler";
 
-/** Options for the `typespec-x-ogen` emitter. */
+/** Options for the `typespec-x-ogen` post-processing emitter. */
 export interface XOgenEmitterOptions {
-  /** Output file type. Defaults to `"yaml"`. */
-  "file-type"?: "yaml" | "json";
   /**
-   * Output file name. Supports `{service-name}`, `{version}` and `{file-type}`
-   * interpolation. Defaults to ogen-friendly `openapi.{...}.{file-type}`.
+   * Directory holding the `@typespec/openapi3` output to patch. Defaults to the
+   * sibling `@typespec/openapi3` directory under the shared output dir.
    */
-  "output-file"?: string;
-  /** OpenAPI versions to emit (forwarded to `@typespec/openapi3`). */
-  "openapi-versions"?: string[];
+  "openapi3-output-dir"?: string;
 }
 
 const HTTP_METHODS = [
@@ -44,104 +36,55 @@ const HTTP_METHODS = [
   "trace",
 ] as const;
 
-// The OpenAPI document objects are patched with arbitrary `x-ogen-*` keys, so
-// they are treated loosely here.
+// The OpenAPI document is parsed back from disk, so it is treated loosely.
 type AnyObject = Record<string, any>;
 
+/**
+ * Post-processes the OpenAPI 3 document produced by `@typespec/openapi3`,
+ * injecting the extensions that the openapi3 emitter does not attach to server
+ * objects or media type objects: `x-ogen-server-name` and
+ * `x-ogen-json-streaming`. Run this emitter *after* `@typespec/openapi3`.
+ */
 export async function $onEmit(context: EmitContext<XOgenEmitterOptions>): Promise<void> {
   const { program } = context;
-  const options = context.options;
-  // file-type is optional: use it when set, otherwise infer from the
-  // output-file extension, and finally fall back to yaml.
-  const fileType =
-    options["file-type"] ?? fileTypeFromFilename(options["output-file"]) ?? "yaml";
 
-  // Fold deferred @ogenName-on-property into each parent's x-ogen-properties
-  // before generating the document, so the openapi3 emitter picks it up.
-  foldPropertyNames(program);
-
-  const getOpenAPI3Options = options["openapi-versions"]
-    ? ({ "openapi-versions": options["openapi-versions"] } as Parameters<typeof getOpenAPI3>[1])
-    : undefined;
-  const records = await getOpenAPI3(program, getOpenAPI3Options);
-
-  const patchState = {
-    operationGroups: program.stateMap(OperationGroupKey) as Map<OperationGroupContainer, string>,
-    serverNames: collectServerNames(program),
-    jsonStreaming: program.stateMap(JsonStreamingKey) as Map<Operation, JsonStreamingLocation>,
-  };
-
-  const multipleServices = records.length > 1;
-
-  for (const record of records) {
-    const documents = record.versioned
-      ? record.versions.map((v) => ({ document: v.document as AnyObject, version: v.version }))
-      : [{ document: record.document as AnyObject, version: undefined as string | undefined }];
-
-    const serviceName = record.service.type.name;
-
-    for (const { document, version } of documents) {
-      patchDocument(program, document, patchState);
-      const filename = resolveFilename(
-        options["output-file"],
-        fileType,
-        serviceName,
-        version,
-        multipleServices,
-      );
-      await emitFile(program, {
-        path: resolvePath(context.emitterOutputDir, filename),
-        content: serialize(document, fileType),
-        newLine: "lf",
-      });
-    }
+  const serverNames = collectServerNames(program);
+  const jsonStreaming = program.stateMap(JsonStreamingKey) as Map<Operation, JsonStreamingLocation>;
+  if (serverNames.length === 0 && jsonStreaming.size === 0) {
+    return;
   }
-}
 
-/** `x-ogen-properties` entry shape on a parent schema. */
-type OgenProperties = Record<string, { name: string }>;
+  const targetDir =
+    context.options["openapi3-output-dir"] ??
+    resolvePath(context.emitterOutputDir, "..", "@typespec", "openapi3");
 
-function foldPropertyNames(program: Program): void {
-  const map = program.stateMap(PropertyNameKey) as Map<ModelProperty, string>;
-  for (const [property, name] of map) {
-    const parent = property.model;
-    if (parent === undefined) {
-      continue;
-    }
-    const existing =
-      (getExtensions(program, parent).get("x-ogen-properties") as OgenProperties | undefined) ?? {};
-    existing[property.name] = { name };
-    setExtension(program, parent, "x-ogen-properties", existing);
+  const specFiles = (await readDirSafe(program, targetDir)).filter(isSpecFile);
+  if (specFiles.length === 0) {
+    reportDiagnostic(program, {
+      code: "openapi3-output-not-found",
+      format: { dir: targetDir },
+      target: NoTarget,
+    });
+    return;
+  }
+
+  const state: PatchState = { serverNames, jsonStreaming };
+  for (const name of specFiles) {
+    const path = resolvePath(targetDir, name);
+    const isJson = name.endsWith(".json");
+    const text = (await program.host.readFile(path)).text;
+    const document = (isJson ? JSON.parse(text) : yamlParse(text)) as AnyObject;
+    patchDocument(program, document, state);
+    await program.host.writeFile(path, serialize(document, isJson));
   }
 }
 
 interface PatchState {
-  operationGroups: Map<OperationGroupContainer, string>;
   serverNames: ServerNameEntry[];
   jsonStreaming: Map<Operation, JsonStreamingLocation>;
 }
 
 function patchDocument(program: Program, document: AnyObject, state: PatchState): void {
-  const operationsById = indexOperationsByOperationId(document);
-
-  // x-ogen-operation-group cascade for interfaces/namespaces.
-  for (const [container, group] of state.operationGroups) {
-    for (const op of collectOperations(container)) {
-      const operation = operationsById.get(resolveOperationId(program, op));
-      if (operation && operation["x-ogen-operation-group"] === undefined) {
-        operation["x-ogen-operation-group"] = group;
-      }
-    }
-  }
-
-  // x-ogen-json-streaming on application/json media types.
-  for (const [op, location] of state.jsonStreaming) {
-    const operation = operationsById.get(resolveOperationId(program, op));
-    if (operation) {
-      applyJsonStreaming(operation, location);
-    }
-  }
-
   // x-ogen-server-name on matching servers.
   const servers: AnyObject[] | undefined = document.servers;
   if (servers) {
@@ -153,6 +96,17 @@ function patchDocument(program: Program, document: AnyObject, state: PatchState)
       }
     }
   }
+
+  // x-ogen-json-streaming on application/json media types.
+  if (state.jsonStreaming.size > 0) {
+    const operationsById = indexOperationsByOperationId(document);
+    for (const [op, location] of state.jsonStreaming) {
+      const operation = operationsById.get(resolveOperationId(program, op));
+      if (operation) {
+        applyJsonStreaming(operation, location);
+      }
+    }
+  }
 }
 
 function indexOperationsByOperationId(document: AnyObject): Map<string, AnyObject> {
@@ -160,7 +114,7 @@ function indexOperationsByOperationId(document: AnyObject): Map<string, AnyObjec
   const paths: AnyObject = document.paths ?? {};
   for (const pathItem of Object.values<AnyObject>(paths)) {
     for (const method of HTTP_METHODS) {
-      const operation = pathItem[method];
+      const operation = pathItem?.[method];
       if (operation && typeof operation.operationId === "string") {
         map.set(operation.operationId, operation);
       }
@@ -191,21 +145,6 @@ function markJsonMediaTypes(content: AnyObject | undefined): void {
   }
 }
 
-function collectOperations(container: OperationGroupContainer): Operation[] {
-  if (container.kind === "Interface") {
-    return [...container.operations.values()];
-  }
-  const ns = container as Namespace;
-  const ops: Operation[] = [...ns.operations.values()];
-  for (const iface of ns.interfaces.values()) {
-    ops.push(...iface.operations.values());
-  }
-  for (const child of ns.namespaces.values()) {
-    ops.push(...collectOperations(child));
-  }
-  return ops;
-}
-
 function collectServerNames(program: Program): ServerNameEntry[] {
   const all: ServerNameEntry[] = [];
   for (const list of (
@@ -216,44 +155,20 @@ function collectServerNames(program: Program): ServerNameEntry[] {
   return all;
 }
 
-function resolveFilename(
-  outputFile: string | undefined,
-  fileType: "yaml" | "json",
-  serviceName: string,
-  version: string | undefined,
-  multipleServices: boolean,
-): string {
-  if (outputFile) {
-    return outputFile
-      .replace(/\{service-name\}/g, serviceName)
-      .replace(/\{version\}/g, version ?? "")
-      .replace(/\{file-type\}/g, fileType);
+async function readDirSafe(program: Program, dir: string): Promise<string[]> {
+  try {
+    return await program.host.readDir(dir);
+  } catch {
+    return [];
   }
-  const parts = ["openapi"];
-  if (multipleServices) {
-    parts.push(serviceName);
-  }
-  if (version) {
-    parts.push(version);
-  }
-  return `${parts.join(".")}.${fileType}`;
 }
 
-function fileTypeFromFilename(filename: string | undefined): "yaml" | "json" | undefined {
-  if (filename === undefined) {
-    return undefined;
-  }
-  if (filename.endsWith(".json")) {
-    return "json";
-  }
-  if (filename.endsWith(".yaml") || filename.endsWith(".yml")) {
-    return "yaml";
-  }
-  return undefined;
+function isSpecFile(name: string): boolean {
+  return name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".json");
 }
 
-function serialize(document: AnyObject, fileType: "yaml" | "json"): string {
-  if (fileType === "json") {
+function serialize(document: AnyObject, isJson: boolean): string {
+  if (isJson) {
     return `${JSON.stringify(document, null, 2)}\n`;
   }
   return yamlStringify(document, { aliasDuplicateObjects: false, lineWidth: 0 });
