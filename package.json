@@ -36,9 +36,13 @@
     "watch": "tsc -p . --watch",
     "clean": "rm -rf dist tsp-output"
   },
+  "dependencies": {
+    "yaml": "^2.7.0"
+  },
   "peerDependencies": {
     "@typespec/compiler": ">=1.12.0 <2.0.0",
-    "@typespec/openapi": ">=1.12.0 <2.0.0"
+    "@typespec/openapi": ">=1.12.0 <2.0.0",
+    "@typespec/openapi3": ">=1.12.0 <2.0.0"
   },
   "devDependencies": {
     "@typespec/compiler": "^1.12.0",

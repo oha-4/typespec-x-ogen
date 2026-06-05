@@ -1,0 +1,5 @@
+emit:
+  - typespec-x-ogen
+options:
+  typespec-x-ogen:
+    file-type: yaml
