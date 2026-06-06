@@ -11,6 +11,14 @@
   ],
   "license": "MIT",
   "author": "Yoshito Ohata",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oha-4/typespec-x-ogen.git"
+  },
+  "bugs": {
+    "url": "https://github.com/oha-4/typespec-x-ogen/issues"
+  },
+  "homepage": "https://github.com/oha-4/typespec-x-ogen#readme",
   "type": "module",
   "main": "dist/src/index.js",
   "tspMain": "lib/main.tsp",
@@ -34,10 +42,15 @@
   "scripts": {
     "build": "tsc -p .",
     "watch": "tsc -p . --watch",
-    "clean": "rm -rf dist tsp-output",
-    "pretest": "node scripts/link-self.mjs",
+    "clean": "rm -rf dist tsp-output coverage",
+    "link:self": "node scripts/link-self.mjs",
+    "format": "prettier --write . && tsp format \"lib/**/*.tsp\" \"samples/**/*.tsp\"",
+    "format:check": "prettier --check . && tsp format --check \"lib/**/*.tsp\" \"samples/**/*.tsp\"",
+    "pretest": "npm run link:self",
     "test": "npm run build && vitest run",
-    "test:watch": "node scripts/link-self.mjs && vitest"
+    "test:watch": "npm run link:self && vitest",
+    "coverage": "npm run build && npm run link:self && vitest run --coverage",
+    "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
     "yaml": "^2.7.0"
@@ -52,6 +65,8 @@
     "@typespec/http": "^1.12.0",
     "@typespec/openapi": "^1.12.0",
     "@typespec/openapi3": "^1.12.0",
+    "@vitest/coverage-v8": "^4.1.0",
+    "prettier": "^3.8.0",
     "typescript": "^6.0.0",
     "vitest": "^4.1.0"
   }

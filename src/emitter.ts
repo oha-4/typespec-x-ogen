@@ -25,16 +25,7 @@ export interface XOgenEmitterOptions {
   "openapi3-output-dir"?: string;
 }
 
-const HTTP_METHODS = [
-  "get",
-  "put",
-  "post",
-  "delete",
-  "options",
-  "head",
-  "patch",
-  "trace",
-] as const;
+const HTTP_METHODS = ["get", "put", "post", "delete", "options", "head", "patch", "trace"] as const;
 
 // The OpenAPI document is parsed back from disk, so it is treated loosely.
 type AnyObject = Record<string, any>;

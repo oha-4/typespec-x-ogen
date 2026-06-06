@@ -1,5 +1,10 @@
 # typespec-x-ogen
 
+[![CI](https://github.com/oha-4/typespec-x-ogen/actions/workflows/ci.yml/badge.svg)](https://github.com/oha-4/typespec-x-ogen/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/oha-4/typespec-x-ogen/branch/main/graph/badge.svg)](https://codecov.io/gh/oha-4/typespec-x-ogen)
+[![npm](https://img.shields.io/npm/v/typespec-x-ogen.svg)](https://www.npmjs.com/package/typespec-x-ogen)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
 TypeSpec decorators for [ogen](https://ogen.dev) OpenAPI vendor extensions.
 
 This library lets you author every [ogen extension](https://ogen.dev/docs/spec/extensions/)
@@ -57,8 +62,8 @@ emitter produces a warning telling you to add it.
 
 ### Post-processor options
 
-| Option | Type | Default | Description |
-| --- | --- | --- | --- |
+| Option                | Type     | Default                          | Description                                                                                       |
+| --------------------- | -------- | -------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `openapi3-output-dir` | `string` | sibling `@typespec/openapi3` dir | Directory of the openapi3 output to patch. Override if you customized openapi3's output location. |
 
 ## Decorators

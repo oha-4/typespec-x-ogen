@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { patchOpenAPIDocument } from "../dist/src/emitter.js";
+import { patchOpenAPIDocument } from "../src/emitter";
 import { openApiFor } from "./test-host";
 
 describe("x-ogen-server-name", () => {
@@ -51,7 +51,9 @@ describe("x-ogen-json-streaming", () => {
     patchOpenAPIDocument(program, document);
     const post = document.paths["/pets"].post;
     expect(post.requestBody.content["application/json"]["x-ogen-json-streaming"]).toBe(true);
-    expect(post.responses["200"].content["application/json"]["x-ogen-json-streaming"]).toBeUndefined();
+    expect(
+      post.responses["200"].content["application/json"]["x-ogen-json-streaming"],
+    ).toBeUndefined();
   });
 
   it("marks only the response when location is response", async () => {

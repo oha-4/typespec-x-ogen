@@ -84,18 +84,14 @@ function warnIfEmitterMissing(program: Program): void {
     return;
   }
 
-  for (const namespace of (
-    program.stateMap(ServerNameKey) as Map<Namespace, unknown>
-  ).keys()) {
+  for (const namespace of (program.stateMap(ServerNameKey) as Map<Namespace, unknown>).keys()) {
     reportDiagnostic(program, {
       code: "requires-emitter",
       format: { decorator: "ogenServerName" },
       target: namespace,
     });
   }
-  for (const operation of (
-    program.stateMap(JsonStreamingKey) as Map<Operation, unknown>
-  ).keys()) {
+  for (const operation of (program.stateMap(JsonStreamingKey) as Map<Operation, unknown>).keys()) {
     reportDiagnostic(program, {
       code: "requires-emitter",
       format: { decorator: "ogenJsonStreaming" },

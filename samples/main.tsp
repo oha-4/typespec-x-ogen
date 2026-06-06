@@ -31,7 +31,8 @@ interface Pets {
   @get list(): Pet[];
 
   @ogenJsonStreaming
-  @post create(@body pet: Pet): Pet;
+  @post
+  create(@body pet: Pet): Pet;
 }
 
 @route("/health")

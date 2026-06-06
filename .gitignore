@@ -8,6 +8,9 @@ dist/
 # TypeSpec output
 tsp-output/
 
+# Coverage
+coverage/
+
 # Logs
 *.log
 npm-debug.log*
