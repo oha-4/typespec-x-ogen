@@ -45,6 +45,8 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
           cache: npm
+      # engine-strict + engines.npm >=11.10 require npm 11.10+ (Node 22 ships npm 10).
+      - run: npm install -g npm@latest
       - run: npm ci
       - run: npm run coverage
       - name: Upload coverage to Codecov
