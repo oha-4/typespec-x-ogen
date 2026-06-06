@@ -34,7 +34,10 @@
   "scripts": {
     "build": "tsc -p .",
     "watch": "tsc -p . --watch",
-    "clean": "rm -rf dist tsp-output"
+    "clean": "rm -rf dist tsp-output",
+    "pretest": "node scripts/link-self.mjs",
+    "test": "npm run build && vitest run",
+    "test:watch": "node scripts/link-self.mjs && vitest"
   },
   "dependencies": {
     "yaml": "^2.7.0"
@@ -49,6 +52,7 @@
     "@typespec/http": "^1.12.0",
     "@typespec/openapi": "^1.12.0",
     "@typespec/openapi3": "^1.12.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^3.2.0"
   }
 }

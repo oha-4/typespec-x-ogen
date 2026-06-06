@@ -68,27 +68,27 @@ export async function $onEmit(context: EmitContext<XOgenEmitterOptions>): Promis
     return;
   }
 
-  const state: PatchState = { serverNames, jsonStreaming };
   for (const name of specFiles) {
     const path = resolvePath(targetDir, name);
     const isJson = name.endsWith(".json");
     const text = (await program.host.readFile(path)).text;
     const document = (isJson ? JSON.parse(text) : yamlParse(text)) as AnyObject;
-    patchDocument(program, document, state);
+    patchOpenAPIDocument(program, document);
     await program.host.writeFile(path, serialize(document, isJson));
   }
 }
 
-interface PatchState {
-  serverNames: ServerNameEntry[];
-  jsonStreaming: Map<Operation, JsonStreamingLocation>;
-}
-
-function patchDocument(program: Program, document: AnyObject, state: PatchState): void {
+/**
+ * Inject `x-ogen-server-name` and `x-ogen-json-streaming` into an OpenAPI 3
+ * document (mutating it in place), based on the decorator state recorded on
+ * `program`. Servers are matched by URL and operations by their resolved
+ * operationId.
+ */
+export function patchOpenAPIDocument(program: Program, document: AnyObject): void {
   // x-ogen-server-name on matching servers.
   const servers: AnyObject[] | undefined = document.servers;
   if (servers) {
-    for (const entry of state.serverNames) {
+    for (const entry of collectServerNames(program)) {
       for (const server of servers) {
         if (server.url === entry.url) {
           server["x-ogen-server-name"] = entry.name;
@@ -98,9 +98,10 @@ function patchDocument(program: Program, document: AnyObject, state: PatchState)
   }
 
   // x-ogen-json-streaming on application/json media types.
-  if (state.jsonStreaming.size > 0) {
+  const jsonStreaming = program.stateMap(JsonStreamingKey) as Map<Operation, JsonStreamingLocation>;
+  if (jsonStreaming.size > 0) {
     const operationsById = indexOperationsByOperationId(document);
-    for (const [op, location] of state.jsonStreaming) {
+    for (const [op, location] of jsonStreaming) {
       const operation = operationsById.get(resolveOperationId(program, op));
       if (operation) {
         applyJsonStreaming(operation, location);

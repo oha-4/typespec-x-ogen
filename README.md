@@ -159,6 +159,7 @@ A complete example lives in [`samples/`](./samples).
 mise install   # Node 24.16.0 (see .tool-versions)
 npm install
 npm run build
+npm test       # vitest
 ```
 
 ## License
