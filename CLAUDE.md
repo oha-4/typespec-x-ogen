@@ -22,8 +22,13 @@ npm run lint:check    # CI check: biome lint --error-on-warnings .
 ```
 
 Requires **Node >= 22** (`@typespec/compiler`/`@typespec/http` need 22+; the test
-harness imports `glob` from `fs/promises`). Toolchain pinned in `.tool-versions`
+harness imports `glob` from `fs/promises`) and **npm >= 11.10** (`engines` +
+`engine-strict=true` in `.npmrc`). Toolchain pinned in `.tool-versions`
 (mise): Node 24.16.0 + pinact.
+
+`.npmrc` also sets `min-release-age=7`: npm refuses dependency versions published
+less than 7 days ago (it derives `--before` from this), the supply-chain analogue
+of pinact's 7-day `min_age` for actions. `npm ci` still installs locked versions.
 
 ## Architecture
 
