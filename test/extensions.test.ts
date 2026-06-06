@@ -52,6 +52,18 @@ describe("x-ogen-properties", () => {
     });
   });
 
+  it("applies a property rename through a spread", async () => {
+    const { document } = await openApiFor(`
+      @service(#{ title: "S" }) namespace S;
+      model Base { @ogenName("Identifier") id: int32; }
+      model Pet { ...Base; name: string; }
+      @route("/p") @get op p(): Pet;
+    `);
+    expect(document.components.schemas.Pet["x-ogen-properties"]).toEqual({
+      id: { name: "Identifier" },
+    });
+  });
+
   it("folds independently across multiple models", async () => {
     const { document } = await openApiFor(`
       @service(#{ title: "S" }) namespace S;

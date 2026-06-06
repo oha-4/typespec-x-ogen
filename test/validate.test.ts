@@ -1,7 +1,6 @@
 import { t } from "@typespec/compiler/testing";
 import { getExtensions } from "@typespec/openapi";
 import { describe, expect, it } from "vitest";
-import { PropertyNameKey } from "../src/state";
 import { $onValidate } from "../src/validate";
 import { Tester } from "./test-host";
 
@@ -65,15 +64,6 @@ describe("$onValidate", () => {
       id: { name: "Id" },
       name: { name: "Title" },
     });
-  });
-
-  it("ignores a property name whose parent model is not linked", async () => {
-    const [{ program }] = await Tester.compileAndDiagnose(`
-      @service(#{ title: "S" }) namespace S;
-      @route("/h") @get op h(): void;
-    `);
-    program.stateMap(PropertyNameKey).set({ model: undefined, name: "orphan" } as any, "X");
-    expect(() => $onValidate(program)).not.toThrow();
   });
 
   it("warns when server-name/json-streaming are used without the emitter", async () => {

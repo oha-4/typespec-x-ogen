@@ -1,4 +1,10 @@
-import type { ModelProperty, Namespace, Operation, Program } from "@typespec/compiler";
+import {
+  navigateProgram,
+  type ModelProperty,
+  type Namespace,
+  type Operation,
+  type Program,
+} from "@typespec/compiler";
 import { getExtensions, setExtension } from "@typespec/openapi";
 import { reportDiagnostic } from "./lib.js";
 import {
@@ -29,19 +35,53 @@ export function $onValidate(program: Program): void {
  * Fold `@ogenName` on model properties into each parent's `x-ogen-properties`.
  * Deferred from decoration time because `ModelProperty.model` is only linked
  * once checking completes.
+ *
+ * Walks every model property in the program rather than just the decorated
+ * ones, so a property inherits the name from whatever it was spread/copied from
+ * (`sourceProperty`). The rename therefore lands on the spread *target* model,
+ * not only the model the decorator was written on.
  */
 function foldPropertyNames(program: Program): void {
-  const map = program.stateMap(PropertyNameKey) as Map<ModelProperty, string>;
-  for (const [property, name] of map) {
-    const parent = property.model;
-    if (parent === undefined) {
-      continue;
-    }
-    const existing =
-      (getExtensions(program, parent).get("x-ogen-properties") as OgenProperties | undefined) ?? {};
-    existing[property.name] = { name };
-    setExtension(program, parent, "x-ogen-properties", existing);
+  const names = program.stateMap(PropertyNameKey) as Map<ModelProperty, string>;
+  if (names.size === 0) {
+    return;
   }
+  navigateProgram(program, {
+    modelProperty(property) {
+      const name = resolvePropertyName(property, names);
+      const parent = property.model;
+      if (name === undefined || parent === undefined) {
+        return;
+      }
+      const existing =
+        (getExtensions(program, parent).get("x-ogen-properties") as OgenProperties | undefined) ??
+        {};
+      existing[property.name] = { name };
+      setExtension(program, parent, "x-ogen-properties", existing);
+    },
+  });
+}
+
+/**
+ * Resolve the `@ogenName` for a property, following the `sourceProperty` chain
+ * so a spread/copied property inherits the name from its origin. A property's
+ * own `@ogenName` (if any) wins, since it is found first.
+ */
+function resolvePropertyName(
+  property: ModelProperty,
+  names: Map<ModelProperty, string>,
+): string | undefined {
+  for (
+    let current: ModelProperty | undefined = property;
+    current !== undefined;
+    current = current.sourceProperty
+  ) {
+    const name = names.get(current);
+    if (name !== undefined) {
+      return name;
+    }
+  }
+  return undefined;
 }
 
 /**

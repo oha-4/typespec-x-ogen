@@ -43,9 +43,11 @@ Two delivery mechanisms depending on what the openapi3 emitter can reach:
 - `decorators.ts` — the five `$ogen*` decorator impls. Trivial: set state or
   `setExtension`.
 - `validate.ts` — `$onValidate`: folds `@ogenName`-on-property into the parent's
-  `x-ogen-properties` and cascades interface/namespace `@ogenOperationGroup` onto
-  contained ops (both via `setExtension`). Also warns when server-name/json-
-  streaming are used without the emitter.
+  `x-ogen-properties` (walking **all** model properties via `navigateProgram` and
+  following `sourceProperty`, so a spread target inherits the rename) and cascades
+  interface/namespace `@ogenOperationGroup` onto contained ops (both via
+  `setExtension`). Also warns when server-name/json-streaming are used without the
+  emitter.
 - `emitter.ts` — `$onEmit` (post-processor) + the exported pure
   `patchOpenAPIDocument(program, document)` (servers matched by url, ops by
   `resolveOperationId`).
@@ -60,6 +62,12 @@ Two delivery mechanisms depending on what the openapi3 emitter can reach:
 - **`ModelProperty.model` is `undefined` during decoration.** `@ogenName` on a
   property therefore stores state and is folded into the parent in `$onValidate`
   (where the graph is complete).
+- **Spread copies a property into a _new_ `ModelProperty` instance**, so the
+  decorator state is keyed on the origin, not the spread target. `foldPropertyNames`
+  walks every property and follows `sourceProperty` to the origin, so
+  `@ogenName` on `model Base { ...id }` still lands on `model Pet { ...Base }`.
+  Re-declaring the property in the target to re-decorate it is **not** valid
+  TypeSpec (duplicate-property error).
 - **Expose decorators only through the `$decorators` map** (`index.ts`). Adding
   top-level `export { $ogenName }` makes the compiler also bind them into the
   global namespace → `ambiguous-symbol` errors.
