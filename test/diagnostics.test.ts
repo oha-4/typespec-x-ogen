@@ -12,7 +12,8 @@ const spec = `
 
 describe("requires-emitter warning", () => {
   it("warns when server-name/json-streaming are used without the emitter", async () => {
-    const [, diagnostics] = await Tester.emit("@typespec/openapi3").compileAndDiagnose(spec);
+    const [, diagnostics] =
+      await Tester.emit("@typespec/openapi3").compileAndDiagnose(spec);
     expectDiagnostics(diagnostics, [
       { code: "typespec-x-ogen/requires-emitter", severity: "warning" },
       { code: "typespec-x-ogen/requires-emitter", severity: "warning" },
@@ -20,7 +21,8 @@ describe("requires-emitter warning", () => {
   });
 
   it("does not warn when the typespec-x-ogen emitter is enabled", async () => {
-    const [, diagnostics] = await Tester.emit("typespec-x-ogen").compileAndDiagnose(spec);
+    const [, diagnostics] =
+      await Tester.emit("typespec-x-ogen").compileAndDiagnose(spec);
     const requiresEmitter = diagnostics.filter(
       (d) => d.code === "typespec-x-ogen/requires-emitter",
     );

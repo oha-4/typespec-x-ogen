@@ -15,8 +15,10 @@ six [ogen](https://ogen.dev/docs/spec/extensions/) OpenAPI vendor extensions
 npm run build         # tsc -> dist/
 npm test              # build + vitest (pretest links the package into node_modules)
 npm run coverage      # build + link + vitest --coverage (v8, lcov)
-npm run format        # prettier --write . + tsp format
+npm run format        # biome format --write . + tsp format
 npm run format:check  # CI check (must pass)
+npm run lint          # biome lint --write . (apply safe fixes)
+npm run lint:check    # CI check: biome lint --error-on-warnings .
 ```
 
 Requires **Node >= 22** (`@typespec/compiler`/`@typespec/http` need 22+; the test
@@ -93,8 +95,8 @@ Two delivery mechanisms depending on what the openapi3 emitter can reach:
 
 ## CI/CD
 
-- `.github/workflows/ci.yml` — format:check + build, then test matrix Node
-  **22/24** (not 20), Codecov upload on 24.
+- `.github/workflows/ci.yml` — format:check + lint:check + build, then test
+  matrix Node **22/24** (not 20), Codecov upload on 24.
 - `.github/workflows/release.yml` — on tag `v*.*.*`: verify tag == package
   version, test, `npm publish --access public` via **Trusted Publishing (OIDC,
   `id-token: write`)** — no `NPM_TOKEN`; provenance is automatic. Upgrades npm to
@@ -112,7 +114,12 @@ Two delivery mechanisms depending on what the openapi3 emitter can reach:
 
 ## Conventions
 
-- Prettier, `printWidth: 100`. `.tsp` formatted with `tsp format`.
+- Biome (`biome.json`) formats + lints `.ts`/`.js`/`.json` at its default width
+  (80); `.tsp` is formatted with `tsp format` (also default width 80). Biome's
+  default indent is tabs, so `indentStyle: space` is set explicitly. `test/**`
+  overrides relax `noExplicitAny`/`noNonNullAssertion` (test scaffolding); the one
+  intentional `any` in `emitter.ts` carries a `biome-ignore`. Biome does not
+  format YAML/Markdown, so those are left as-is.
 - Match the surrounding code's comment density and idiom.
 - Commit/push only when asked. Do not re-pin actions or change the user's pins
   without asking.

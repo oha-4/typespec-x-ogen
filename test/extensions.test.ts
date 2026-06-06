@@ -90,7 +90,11 @@ describe("x-oapi-codegen-extra-tags", () => {
       }
       @route("/p") @get op p(): Pet;
     `);
-    expect(document.components.schemas.Pet.properties.id["x-oapi-codegen-extra-tags"]).toEqual({
+    expect(
+      document.components.schemas.Pet.properties.id[
+        "x-oapi-codegen-extra-tags"
+      ],
+    ).toEqual({
       gorm: "primaryKey",
       valid: "customIdValidator",
     });

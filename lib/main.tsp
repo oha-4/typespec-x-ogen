@@ -22,7 +22,10 @@ namespace TypespecXOgen;
  * }
  * ```
  */
-extern dec ogenName(target: Model | Enum | Union | Scalar | ModelProperty, name: valueof string);
+extern dec ogenName(
+  target: Model | Enum | Union | Scalar | ModelProperty,
+  name: valueof string
+);
 
 /**
  * Set the ogen `x-oapi-codegen-extra-tags` extension on a model property,
@@ -50,7 +53,10 @@ extern dec ogenExtraTags(target: ModelProperty, tags: valueof Record<string>);
  *
  * @param group The operation group name.
  */
-extern dec ogenOperationGroup(target: Operation | Interface | Namespace, group: valueof string);
+extern dec ogenOperationGroup(
+  target: Operation | Interface | Namespace,
+  group: valueof string
+);
 
 /**
  * Set the ogen `x-ogen-server-name` extension on the server with the given URL,
@@ -68,7 +74,11 @@ extern dec ogenOperationGroup(target: Operation | Interface | Namespace, group: 
  * namespace MyService;
  * ```
  */
-extern dec ogenServerName(target: Namespace, serverUrl: valueof string, name: valueof string);
+extern dec ogenServerName(
+  target: Namespace,
+  serverUrl: valueof string,
+  name: valueof string
+);
 
 /**
  * Set the ogen `x-ogen-json-streaming` extension to enable streaming JSON
@@ -77,4 +87,7 @@ extern dec ogenServerName(target: Namespace, serverUrl: valueof string, name: va
  * @param location Restrict to the `"request"` or `"response"` body. When
  * omitted, both request and response JSON bodies are marked.
  */
-extern dec ogenJsonStreaming(target: Operation, location?: valueof "request" | "response");
+extern dec ogenJsonStreaming(
+  target: Operation,
+  location?: valueof "request" | "response"
+);

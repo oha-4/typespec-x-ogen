@@ -1,4 +1,8 @@
-import { createTypeSpecLibrary, paramMessage, type JSONSchemaType } from "@typespec/compiler";
+import {
+  createTypeSpecLibrary,
+  paramMessage,
+  type JSONSchemaType,
+} from "@typespec/compiler";
 import type { XOgenEmitterOptions } from "./emitter.js";
 
 const EmitterOptionsSchema: JSONSchemaType<XOgenEmitterOptions> = {

@@ -44,8 +44,10 @@
     "watch": "tsc -p . --watch",
     "clean": "rm -rf dist tsp-output coverage",
     "link:self": "node scripts/link-self.mjs",
-    "format": "prettier --write . && tsp format \"lib/**/*.tsp\" \"samples/**/*.tsp\"",
-    "format:check": "prettier --check . && tsp format --check \"lib/**/*.tsp\" \"samples/**/*.tsp\"",
+    "format": "biome format --write . && tsp format \"lib/**/*.tsp\" \"samples/**/*.tsp\"",
+    "format:check": "biome format . && tsp format --check \"lib/**/*.tsp\" \"samples/**/*.tsp\"",
+    "lint": "biome lint --write .",
+    "lint:check": "biome lint --error-on-warnings .",
     "pretest": "npm run link:self",
     "test": "npm run build && vitest run",
     "test:watch": "npm run link:self && vitest",
@@ -61,12 +63,12 @@
     "@typespec/openapi3": ">=1.12.0 <2.0.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.16",
     "@typespec/compiler": "^1.12.0",
     "@typespec/http": "^1.12.0",
     "@typespec/openapi": "^1.12.0",
     "@typespec/openapi3": "^1.12.0",
     "@vitest/coverage-v8": "^4.1.0",
-    "prettier": "^3.8.0",
     "typescript": "^6.0.0",
     "vitest": "^4.1.0"
   }

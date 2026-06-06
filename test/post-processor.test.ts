@@ -12,7 +12,9 @@ describe("x-ogen-server-name", () => {
       @route("/h") @get op h(): string;
     `);
     patchOpenAPIDocument(program, document);
-    const server = document.servers.find((s: any) => s.url === "https://api.example.com");
+    const server = document.servers.find(
+      (s: any) => s.url === "https://api.example.com",
+    );
     expect(server["x-ogen-server-name"]).toBe("production");
   });
 
@@ -26,7 +28,9 @@ describe("x-ogen-server-name", () => {
       @route("/h") @get op h(): string;
     `);
     patchOpenAPIDocument(program, document);
-    const staging = document.servers.find((s: any) => s.url === "https://staging.example.com");
+    const staging = document.servers.find(
+      (s: any) => s.url === "https://staging.example.com",
+    );
     expect(staging["x-ogen-server-name"]).toBeUndefined();
   });
 
@@ -41,8 +45,12 @@ describe("x-ogen-server-name", () => {
       @route("/h") @get op h(): string;
     `);
     patchOpenAPIDocument(program, document);
-    const prod = document.servers.find((s: any) => s.url === "https://api.example.com");
-    const staging = document.servers.find((s: any) => s.url === "https://staging.example.com");
+    const prod = document.servers.find(
+      (s: any) => s.url === "https://api.example.com",
+    );
+    const staging = document.servers.find(
+      (s: any) => s.url === "https://staging.example.com",
+    );
     expect(prod["x-ogen-server-name"]).toBe("production");
     expect(staging["x-ogen-server-name"]).toBe("staging");
   });
@@ -70,26 +78,46 @@ describe("x-ogen-json-streaming", () => {
     const { program, document } = await openApiFor(spec("@ogenJsonStreaming"));
     patchOpenAPIDocument(program, document);
     const post = document.paths["/pets"].post;
-    expect(post.requestBody.content["application/json"]["x-ogen-json-streaming"]).toBe(true);
-    expect(post.responses["200"].content["application/json"]["x-ogen-json-streaming"]).toBe(true);
+    expect(
+      post.requestBody.content["application/json"]["x-ogen-json-streaming"],
+    ).toBe(true);
+    expect(
+      post.responses["200"].content["application/json"][
+        "x-ogen-json-streaming"
+      ],
+    ).toBe(true);
   });
 
   it("marks only the request when location is request", async () => {
-    const { program, document } = await openApiFor(spec(`@ogenJsonStreaming("request")`));
+    const { program, document } = await openApiFor(
+      spec(`@ogenJsonStreaming("request")`),
+    );
     patchOpenAPIDocument(program, document);
     const post = document.paths["/pets"].post;
-    expect(post.requestBody.content["application/json"]["x-ogen-json-streaming"]).toBe(true);
     expect(
-      post.responses["200"].content["application/json"]["x-ogen-json-streaming"],
+      post.requestBody.content["application/json"]["x-ogen-json-streaming"],
+    ).toBe(true);
+    expect(
+      post.responses["200"].content["application/json"][
+        "x-ogen-json-streaming"
+      ],
     ).toBeUndefined();
   });
 
   it("marks only the response when location is response", async () => {
-    const { program, document } = await openApiFor(spec(`@ogenJsonStreaming("response")`));
+    const { program, document } = await openApiFor(
+      spec(`@ogenJsonStreaming("response")`),
+    );
     patchOpenAPIDocument(program, document);
     const post = document.paths["/pets"].post;
-    expect(post.requestBody.content["application/json"]["x-ogen-json-streaming"]).toBeUndefined();
-    expect(post.responses["200"].content["application/json"]["x-ogen-json-streaming"]).toBe(true);
+    expect(
+      post.requestBody.content["application/json"]["x-ogen-json-streaming"],
+    ).toBeUndefined();
+    expect(
+      post.responses["200"].content["application/json"][
+        "x-ogen-json-streaming"
+      ],
+    ).toBe(true);
   });
 
   it("marks +json media types but leaves non-json ones alone", async () => {
@@ -99,8 +127,12 @@ describe("x-ogen-json-streaming", () => {
     reqContent["application/xml"] = { schema: {} };
     delete reqContent["application/json"];
     patchOpenAPIDocument(program, document);
-    expect(reqContent["application/merge-patch+json"]["x-ogen-json-streaming"]).toBe(true);
-    expect(reqContent["application/xml"]["x-ogen-json-streaming"]).toBeUndefined();
+    expect(
+      reqContent["application/merge-patch+json"]["x-ogen-json-streaming"],
+    ).toBe(true);
+    expect(
+      reqContent["application/xml"]["x-ogen-json-streaming"],
+    ).toBeUndefined();
   });
 
   it("tolerates a document with no paths", async () => {
@@ -113,7 +145,9 @@ describe("x-ogen-json-streaming", () => {
     delete document.paths["/pets"].post.responses;
     patchOpenAPIDocument(program, document);
     const post = document.paths["/pets"].post;
-    expect(post.requestBody.content["application/json"]["x-ogen-json-streaming"]).toBe(true);
+    expect(
+      post.requestBody.content["application/json"]["x-ogen-json-streaming"],
+    ).toBe(true);
   });
 
   it("skips operations whose operationId does not match", async () => {
@@ -122,9 +156,13 @@ describe("x-ogen-json-streaming", () => {
     document.paths["/pets"].post.operationId = "doesNotMatch";
     patchOpenAPIDocument(program, document);
     const post = document.paths["/pets"].post;
-    expect(post.requestBody.content["application/json"]["x-ogen-json-streaming"]).toBeUndefined();
     expect(
-      post.responses["200"].content["application/json"]["x-ogen-json-streaming"],
+      post.requestBody.content["application/json"]["x-ogen-json-streaming"],
+    ).toBeUndefined();
+    expect(
+      post.responses["200"].content["application/json"][
+        "x-ogen-json-streaming"
+      ],
     ).toBeUndefined();
   });
 });

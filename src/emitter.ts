@@ -25,9 +25,19 @@ export interface XOgenEmitterOptions {
   "openapi3-output-dir"?: string;
 }
 
-const HTTP_METHODS = ["get", "put", "post", "delete", "options", "head", "patch", "trace"] as const;
+const HTTP_METHODS = [
+  "get",
+  "put",
+  "post",
+  "delete",
+  "options",
+  "head",
+  "patch",
+  "trace",
+] as const;
 
 // The OpenAPI document is parsed back from disk, so it is treated loosely.
+// biome-ignore lint/suspicious/noExplicitAny: the on-disk document is untyped
 type AnyObject = Record<string, any>;
 
 /**
@@ -36,11 +46,16 @@ type AnyObject = Record<string, any>;
  * objects or media type objects: `x-ogen-server-name` and
  * `x-ogen-json-streaming`. Run this emitter *after* `@typespec/openapi3`.
  */
-export async function $onEmit(context: EmitContext<XOgenEmitterOptions>): Promise<void> {
+export async function $onEmit(
+  context: EmitContext<XOgenEmitterOptions>,
+): Promise<void> {
   const { program } = context;
 
   const serverNames = collectServerNames(program);
-  const jsonStreaming = program.stateMap(JsonStreamingKey) as Map<Operation, JsonStreamingLocation>;
+  const jsonStreaming = program.stateMap(JsonStreamingKey) as Map<
+    Operation,
+    JsonStreamingLocation
+  >;
   if (serverNames.length === 0 && jsonStreaming.size === 0) {
     return;
   }
@@ -75,7 +90,10 @@ export async function $onEmit(context: EmitContext<XOgenEmitterOptions>): Promis
  * `program`. Servers are matched by URL and operations by their resolved
  * operationId.
  */
-export function patchOpenAPIDocument(program: Program, document: AnyObject): void {
+export function patchOpenAPIDocument(
+  program: Program,
+  document: AnyObject,
+): void {
   // x-ogen-server-name on matching servers.
   const servers: AnyObject[] | undefined = document.servers;
   if (servers) {
@@ -89,7 +107,10 @@ export function patchOpenAPIDocument(program: Program, document: AnyObject): voi
   }
 
   // x-ogen-json-streaming on application/json media types.
-  const jsonStreaming = program.stateMap(JsonStreamingKey) as Map<Operation, JsonStreamingLocation>;
+  const jsonStreaming = program.stateMap(JsonStreamingKey) as Map<
+    Operation,
+    JsonStreamingLocation
+  >;
   if (jsonStreaming.size > 0) {
     const operationsById = indexOperationsByOperationId(document);
     for (const [op, location] of jsonStreaming) {
@@ -101,7 +122,9 @@ export function patchOpenAPIDocument(program: Program, document: AnyObject): voi
   }
 }
 
-function indexOperationsByOperationId(document: AnyObject): Map<string, AnyObject> {
+function indexOperationsByOperationId(
+  document: AnyObject,
+): Map<string, AnyObject> {
   const map = new Map<string, AnyObject>();
   const paths: AnyObject = document.paths ?? {};
   for (const pathItem of Object.values<AnyObject>(paths)) {
@@ -115,12 +138,17 @@ function indexOperationsByOperationId(document: AnyObject): Map<string, AnyObjec
   return map;
 }
 
-function applyJsonStreaming(operation: AnyObject, location: JsonStreamingLocation): void {
+function applyJsonStreaming(
+  operation: AnyObject,
+  location: JsonStreamingLocation,
+): void {
   if (location !== "response") {
     markJsonMediaTypes(operation.requestBody?.content);
   }
   if (location !== "request") {
-    for (const response of Object.values<AnyObject>(operation.responses ?? {})) {
+    for (const response of Object.values<AnyObject>(
+      operation.responses ?? {},
+    )) {
       markJsonMediaTypes(response?.content);
     }
   }
@@ -156,12 +184,17 @@ async function readDirSafe(program: Program, dir: string): Promise<string[]> {
 }
 
 function isSpecFile(name: string): boolean {
-  return name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".json");
+  return (
+    name.endsWith(".yaml") || name.endsWith(".yml") || name.endsWith(".json")
+  );
 }
 
 function serialize(document: AnyObject, isJson: boolean): string {
   if (isJson) {
     return `${JSON.stringify(document, null, 2)}\n`;
   }
-  return yamlStringify(document, { aliasDuplicateObjects: false, lineWidth: 0 });
+  return yamlStringify(document, {
+    aliasDuplicateObjects: false,
+    lineWidth: 0,
+  });
 }

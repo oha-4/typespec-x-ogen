@@ -90,22 +90,34 @@ const streamingSpec = `
 describe("$onEmit", () => {
   it("patches the YAML file the openapi3 emitter wrote", async () => {
     const { patched } = await runEmit(serverSpec);
-    const server = patched.servers.find((s: any) => s.url === "https://api.example.com");
+    const server = patched.servers.find(
+      (s: any) => s.url === "https://api.example.com",
+    );
     expect(server["x-ogen-server-name"]).toBe("production");
   });
 
   it("patches a JSON file too", async () => {
-    const { patched } = await runEmit(streamingSpec, { fileName: "openapi.json" });
+    const { patched } = await runEmit(streamingSpec, {
+      fileName: "openapi.json",
+    });
     const post = patched.paths["/pets"].post;
-    expect(post.requestBody.content["application/json"]["x-ogen-json-streaming"]).toBe(true);
-    expect(post.responses["200"].content["application/json"]["x-ogen-json-streaming"]).toBe(true);
+    expect(
+      post.requestBody.content["application/json"]["x-ogen-json-streaming"],
+    ).toBe(true);
+    expect(
+      post.responses["200"].content["application/json"][
+        "x-ogen-json-streaming"
+      ],
+    ).toBe(true);
   });
 
   it("honors the openapi3-output-dir option", async () => {
     const { patched } = await runEmit(serverSpec, {
       options: { "openapi3-output-dir": "/custom/spec" },
     });
-    const server = patched.servers.find((s: any) => s.url === "https://api.example.com");
+    const server = patched.servers.find(
+      (s: any) => s.url === "https://api.example.com",
+    );
     expect(server["x-ogen-server-name"]).toBe("production");
   });
 

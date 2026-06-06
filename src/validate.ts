@@ -54,8 +54,9 @@ function foldPropertyNames(program: Program): void {
         return;
       }
       const existing =
-        (getExtensions(program, parent).get("x-ogen-properties") as OgenProperties | undefined) ??
-        {};
+        (getExtensions(program, parent).get("x-ogen-properties") as
+          | OgenProperties
+          | undefined) ?? {};
       existing[property.name] = { name };
       setExtension(program, parent, "x-ogen-properties", existing);
     },
@@ -89,10 +90,15 @@ function resolvePropertyName(
  * operation that does not already declare its own group.
  */
 function cascadeOperationGroups(program: Program): void {
-  const map = program.stateMap(OperationGroupKey) as Map<OperationGroupContainer, string>;
+  const map = program.stateMap(OperationGroupKey) as Map<
+    OperationGroupContainer,
+    string
+  >;
   for (const [container, group] of map) {
     for (const op of collectOperations(container)) {
-      if (getExtensions(program, op).get("x-ogen-operation-group") === undefined) {
+      if (
+        getExtensions(program, op).get("x-ogen-operation-group") === undefined
+      ) {
         setExtension(program, op, "x-ogen-operation-group", group);
       }
     }
@@ -123,18 +129,26 @@ function warnIfEmitterMissing(program: Program): void {
   // perf), so treat it like `undefined`: no emitter runs at all, making the
   // "missing post-processor" warning meaningless noise in the editor.
   const emit = program.compilerOptions.emit;
-  if (emit === undefined || emit.length === 0 || emit.some((e) => e.includes("typespec-x-ogen"))) {
+  if (
+    emit === undefined ||
+    emit.length === 0 ||
+    emit.some((e) => e.includes("typespec-x-ogen"))
+  ) {
     return;
   }
 
-  for (const namespace of (program.stateMap(ServerNameKey) as Map<Namespace, unknown>).keys()) {
+  for (const namespace of (
+    program.stateMap(ServerNameKey) as Map<Namespace, unknown>
+  ).keys()) {
     reportDiagnostic(program, {
       code: "requires-emitter",
       format: { decorator: "ogenServerName" },
       target: namespace,
     });
   }
-  for (const operation of (program.stateMap(JsonStreamingKey) as Map<Operation, unknown>).keys()) {
+  for (const operation of (
+    program.stateMap(JsonStreamingKey) as Map<Operation, unknown>
+  ).keys()) {
     reportDiagnostic(program, {
       code: "requires-emitter",
       format: { decorator: "ogenJsonStreaming" },

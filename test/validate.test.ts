@@ -16,7 +16,9 @@ describe("$onValidate", () => {
     expect(getExtensions(program, Pet).get("x-ogen-properties")).toEqual({
       id: { name: "Identifier" },
     });
-    expect(getExtensions(program, list).get("x-ogen-operation-group")).toBe("Pets");
+    expect(getExtensions(program, list).get("x-ogen-operation-group")).toBe(
+      "Pets",
+    );
   });
 
   it("cascades a namespace group over direct, interface, and nested ops", async () => {
@@ -77,7 +79,9 @@ describe("$onValidate", () => {
     (program.compilerOptions as any).emit = ["@typespec/openapi3"];
     $onValidate(program);
     const codes = program.diagnostics.map((d) => d.code);
-    expect(codes.filter((c) => c === "typespec-x-ogen/requires-emitter")).toHaveLength(2);
+    expect(
+      codes.filter((c) => c === "typespec-x-ogen/requires-emitter"),
+    ).toHaveLength(2);
   });
 
   it("does not warn when the emitter is enabled", async () => {
@@ -88,7 +92,10 @@ describe("$onValidate", () => {
       namespace S;
       @route("/h") @ogenJsonStreaming @get op h(): string;
     `);
-    (program.compilerOptions as any).emit = ["@typespec/openapi3", "typespec-x-ogen"];
+    (program.compilerOptions as any).emit = [
+      "@typespec/openapi3",
+      "typespec-x-ogen",
+    ];
     const before = program.diagnostics.length;
     $onValidate(program);
     expect(program.diagnostics.length).toBe(before);
