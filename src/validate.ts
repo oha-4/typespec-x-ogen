@@ -119,8 +119,11 @@ function collectOperations(container: OperationGroupContainer): Operation[] {
  * post-processing emitter. Warn if they are used but it is not enabled.
  */
 function warnIfEmitterMissing(program: Program): void {
+  // An empty `emit` is the language server's default (it skips emitters for
+  // perf), so treat it like `undefined`: no emitter runs at all, making the
+  // "missing post-processor" warning meaningless noise in the editor.
   const emit = program.compilerOptions.emit;
-  if (emit === undefined || emit.some((e) => e.includes("typespec-x-ogen"))) {
+  if (emit === undefined || emit.length === 0 || emit.some((e) => e.includes("typespec-x-ogen"))) {
     return;
   }
 

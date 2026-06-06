@@ -93,4 +93,20 @@ describe("$onValidate", () => {
     $onValidate(program);
     expect(program.diagnostics.length).toBe(before);
   });
+
+  it("does not warn when emit is empty (language server default)", async () => {
+    const [{ program }] = await Tester.compileAndDiagnose(`
+      @service(#{ title: "S" })
+      @server("https://api.example.com", "Production")
+      @ogenServerName("https://api.example.com", "production")
+      namespace S;
+      @route("/h") @ogenJsonStreaming @get op h(): string;
+    `);
+    // The TypeSpec language server sets emit to [] by default (it skips
+    // emitters), so an empty list must not produce the missing-emitter warning.
+    (program.compilerOptions as any).emit = [];
+    const before = program.diagnostics.length;
+    $onValidate(program);
+    expect(program.diagnostics.length).toBe(before);
+  });
 });
