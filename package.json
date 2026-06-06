@@ -1,6 +1,6 @@
 {
   "name": "typespec-x-ogen",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "TypeSpec decorators for ogen (https://ogen.dev) OpenAPI vendor extensions (x-ogen-*).",
   "keywords": [
     "typespec",
