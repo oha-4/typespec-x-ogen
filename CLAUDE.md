@@ -96,8 +96,11 @@ Two delivery mechanisms depending on what the openapi3 emitter can reach:
 - `.github/workflows/ci.yml` — format:check + build, then test matrix Node
   **22/24** (not 20), Codecov upload on 24.
 - `.github/workflows/release.yml` — on tag `v*.*.*`: verify tag == package
-  version, test, `npm publish --provenance --access public` (needs `NPM_TOKEN`),
-  GitHub release.
+  version, test, `npm publish --access public` via **Trusted Publishing (OIDC,
+  `id-token: write`)** — no `NPM_TOKEN`; provenance is automatic. Upgrades npm to
+  latest first (Trusted Publishing needs npm >= 11.5.1). Requires a trusted
+  publisher (this repo + `release.yml`) configured on npmjs.com. Then a GitHub
+  release.
 - `.github/workflows/pinact.yml` — official `pinact-action` (validation mode)
   verifying all actions stay SHA-pinned. Config `.github/pinact.yaml` enforces a
   strict 7-day `min_age` for **all** actions (no `actions/*` exemption).
