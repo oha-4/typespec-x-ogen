@@ -36,6 +36,37 @@ describe("x-ogen-properties", () => {
       id: { name: "Identifier" },
     });
   });
+
+  it("folds multiple renamed properties on one model", async () => {
+    const { document } = await openApiFor(`
+      @service(#{ title: "S" }) namespace S;
+      model Pet {
+        @ogenName("Identifier") id: int32;
+        @ogenName("Title") name: string;
+      }
+      @route("/p") @get op p(): Pet;
+    `);
+    expect(document.components.schemas.Pet["x-ogen-properties"]).toEqual({
+      id: { name: "Identifier" },
+      name: { name: "Title" },
+    });
+  });
+
+  it("folds independently across multiple models", async () => {
+    const { document } = await openApiFor(`
+      @service(#{ title: "S" }) namespace S;
+      model Pet { @ogenName("PetId") id: int32; }
+      model Owner { @ogenName("OwnerId") id: int32; }
+      @route("/p") @get op p(): Pet;
+      @route("/o") @get op o(): Owner;
+    `);
+    expect(document.components.schemas.Pet["x-ogen-properties"]).toEqual({
+      id: { name: "PetId" },
+    });
+    expect(document.components.schemas.Owner["x-ogen-properties"]).toEqual({
+      id: { name: "OwnerId" },
+    });
+  });
 });
 
 describe("x-oapi-codegen-extra-tags", () => {
