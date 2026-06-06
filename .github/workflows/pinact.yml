@@ -4,21 +4,26 @@ on:
   pull_request:
     paths:
       - ".github/workflows/**"
+      - ".github/pinact.yaml"
   push:
     branches: [main]
     paths:
       - ".github/workflows/**"
+      - ".github/pinact.yaml"
 
 permissions:
   contents: read
 
 jobs:
-  verify:
+  pinact:
     name: Verify actions are pinned
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: jdx/mise-action@c37c93293d6b742fc901e1406b8f764f6fb19dac # v2.4.4
-      - run: pinact run --check --verify
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+        with:
+          persist-credentials: false
+      - uses: suzuki-shunsuke/pinact-action@896d595f299e71d65b9d28349d6956abe144390a # v3.0.0
+        with:
+          fix: "false"
+          github_token: ${{ github.token }}
+          config: .github/pinact.yaml

@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/suzuki-shunsuke/pinact/refs/heads/main/json-schema/pinact.json
+# pinact - https://github.com/suzuki-shunsuke/pinact
+version: 3
+# Audit every pinned action against a minimum release age (mitigates pulling a
+# freshly published, potentially compromised version). `always` runs the audit
+# on every `pinact run` (and the CI check), not only with --verify-min-age.
+min_age:
+  value: 7
+  always: true
